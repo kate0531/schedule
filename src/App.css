@@ -44,6 +44,15 @@
   border-color: #cdd6e4;
 }
 
+.actions select {
+  border: 1px solid #e3e8f0;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
 .calendar {
   border: 1px solid #e3e8f0;
   border-radius: 14px;
@@ -83,18 +92,148 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  cursor: pointer;
+}
+
+.day-cell:focus-visible {
+  outline: 2px solid #2f6df6;
+  outline-offset: -2px;
 }
 
 .day-cell:nth-child(7n) {
   border-right: none;
 }
 
+.day-num-row {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
 .day-num {
-  align-self: flex-end;
   font-size: 13px;
   color: #6b7280;
-  padding: 2px 8px;
+  padding: 2px 4px;
   border-radius: 999px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.day-side {
+  display: inline-flex;
+  min-width: 18px;
+}
+
+.day-side-left {
+  justify-self: end;
+}
+
+.day-side-right {
+  justify-self: start;
+}
+
+.day-side-placeholder {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+}
+
+.holiday-star-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.holiday-star {
+  border: none;
+  background: transparent;
+  color: #b91c1c;
+  cursor: pointer;
+  padding: 0 2px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.holiday-star:hover {
+  color: #991b1b;
+}
+
+.holiday-star-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 40;
+  padding: 6px 8px;
+  background: #f3f4f6;
+  color: #111827;
+  font-size: 11px;
+  font-weight: 400;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+  max-width: none;
+  white-space: nowrap;
+}
+
+.notice-bulb {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+  cursor: pointer;
+  will-change: transform, opacity, filter;
+  animation: notice-bulb-blink 1.05s ease-in-out infinite;
+}
+
+.notice-bulb-icon {
+  display: block;
+}
+
+/* 강한 깜빡임 + 글로우로 클릭 유도 */
+@keyframes notice-bulb-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.8))
+      drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.12);
+    filter: drop-shadow(0 0 5px rgba(245, 158, 11, 1))
+      drop-shadow(0 0 12px rgba(251, 191, 36, 0.85));
+  }
+  36% {
+    opacity: 0.28;
+    transform: scale(0.88);
+    filter: drop-shadow(0 0 1px rgba(180, 83, 9, 0.35));
+  }
+  48% {
+    opacity: 1;
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.95))
+      drop-shadow(0 0 10px rgba(251, 191, 36, 0.65));
+  }
+  60% {
+    opacity: 0.4;
+    transform: scale(0.92);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.45));
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.85))
+      drop-shadow(0 0 9px rgba(251, 191, 36, 0.55));
+  }
 }
 
 .day-num.today {
@@ -125,7 +264,9 @@
   background: #fafbfe;
 }
 
-.other-month .day-num {
+.other-month .day-num,
+.other-month .holiday-star,
+.other-month .notice-bulb {
   opacity: 0.6;
 }
 
@@ -155,6 +296,94 @@
 .shift-list {
   display: grid;
   gap: 4px;
+}
+
+.notice-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.notice-modal {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e3e8f0;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+  padding: 18px 18px 14px;
+}
+
+.notice-modal-title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.notice-modal-body {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e3e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111827;
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+}
+
+.notice-modal-body:focus {
+  outline: none;
+  border-color: #93b4ff;
+  box-shadow: 0 0 0 3px rgba(47, 109, 246, 0.15);
+}
+
+.notice-modal-body::placeholder {
+  color: #9ca3af;
+}
+
+.notice-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.notice-modal-secondary,
+.notice-modal-primary {
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.notice-modal-secondary {
+  border: 1px solid #e3e8f0;
+  background: #fff;
+  color: #374151;
+}
+
+.notice-modal-primary {
+  border: 1px solid #2f6df6;
+  background: #2f6df6;
+  color: #fff;
+}
+
+.notice-modal-secondary:hover {
+  border-color: #cdd6e4;
+}
+
+.notice-modal-primary:hover {
+  background: #2563eb;
 }
 
 .shift-item {
@@ -225,8 +454,8 @@
   bottom: calc(100% + 8px);
   transform: translateX(-50%);
   padding: 8px 10px;
-  background: #111827;
-  color: #f9fafb;
+  background: #f3f4f6;
+  color: #111827;
   font-size: 11px;
   font-weight: 500;
   line-height: 1.45;
@@ -249,7 +478,7 @@
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: #111827;
+  border-top-color: #f3f4f6;
 }
 
 .shift-tooltip:hover .shift-tooltip-panel,
@@ -273,13 +502,13 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: #4b5563;
 }
 
 .shift-tooltip-list {
   margin: 0;
   padding-left: 16px;
-  color: #e5e7eb;
+  color: #111827;
 }
 
 .shift-tooltip-list li {
@@ -288,7 +517,18 @@
 
 .shift-tooltip-text {
   display: block;
-  color: #e5e7eb;
+  color: #111827;
+}
+
+.worker-name {
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.worker-name-leave:hover {
+  color: #dc2626;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #dc2626;
 }
 
 @media (max-width: 900px) {
