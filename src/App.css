@@ -1,0 +1,131 @@
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.title-group h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.title-group p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  border: 1px solid #e3e8f0;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.actions button:hover {
+  border-color: #cdd6e4;
+}
+
+.calendar {
+  border: 1px solid #e3e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.weekday {
+  padding: 10px 12px;
+  text-align: right;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 1px solid #e3e8f0;
+  background: #fbfcff;
+}
+
+.day-cell {
+  min-height: 124px;
+  border-right: 1px solid #e3e8f0;
+  border-bottom: 1px solid #e3e8f0;
+  padding: 8px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.day-num {
+  align-self: flex-end;
+  font-size: 13px;
+  color: #6b7280;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.day-num.today {
+  background: #edf3ff;
+  color: #2f6df6;
+  font-weight: 700;
+}
+
+.other-month {
+  background: #fafbfe;
+}
+
+.other-month .day-num {
+  opacity: 0.6;
+}
+
+.memo {
+  width: 100%;
+  flex: 1;
+  border: 1px dashed transparent;
+  background: transparent;
+  resize: none;
+  padding: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #374151;
+  border-radius: 8px;
+}
+
+.memo::placeholder {
+  color: #9ca3af;
+}
+
+.memo:focus {
+  outline: none;
+  border-color: #cfe0ff;
+  background: #fcfdff;
+}
+
+@media (max-width: 900px) {
+  .day-cell {
+    min-height: 104px;
+  }
+}
