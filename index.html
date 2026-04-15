@@ -1,10 +1,173 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blank Screen</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blind Auto-Paster V18.0 (Shape Recovery)</title>
+    <style>
+        :root { --primary: #2563eb; --danger: #ef4444; --bg: #0f172a; --panel: #1e293b; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header-bar { background: var(--panel); padding: 15px 25px; display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #334155; }
+        .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-auto { background: var(--danger); color: white; animation: pulse 2s infinite; font-size: 15px; }
+        .btn-save { background: #10b981; color: white; margin-left: auto; }
+        .workspace { display: flex; flex: 1; overflow: hidden; gap: 15px; padding: 15px; }
+        .panel { flex: 1; display: flex; flex-direction: column; background: var(--panel); border-radius: 12px; border: 2px dashed #475569; overflow: hidden; }
+        .panel-header { padding: 12px; background: #334155; font-weight: bold; text-align: center; }
+        .viewer-container { flex: 1; overflow: auto; position: relative; background: #334155; display: flex; justify-content: center; align-items: flex-start; }
+        canvas { box-shadow: 0 0 20px rgba(0,0,0,0.5); background: white; margin: 20px; display: none; }
+        .upload-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+    </style>
 </head>
 <body>
+
+<div id="loading"><div style="font-size: 20px;">🚀 형상 복원 및 초정밀 마킹 복제 중...</div></div>
+
+<div class="header-bar">
+    <div style="font-size: 18px; font-weight: bold;">🚩 Blind Auto-Paster V18.0 (Shape Recovery)</div>
+    <button id="autoBtn" class="btn btn-auto" onclick="runAutoPasting()" style="display:none;">🚀 정밀 복제 시작</button>
+    <button class="btn btn-save" onclick="downloadResult()">💾 최종 도면 저장</button>
+</div>
+
+<div class="workspace">
+    <div class="panel" id="oldPanel">
+        <div class="panel-header">OLD (원본 도면) <button onclick="location.reload()" style="font-size:10px; cursor:pointer;">초기화</button></div>
+        <div class="viewer-container">
+            <div class="upload-ui" id="oldUI"><label style="cursor:pointer; background:#475569; padding:10px; border-radius:5px;" for="oldIn">도면 업로드</label></div>
+            <canvas id="oldC"></canvas>
+        </div>
+        <input type="file" id="oldIn" accept="image/*" style="display:none;">
+    </div>
+    <div class="panel" id="newPanel">
+        <div class="panel-header">NEW (복제 대상)</div>
+        <div class="viewer-container">
+            <div class="upload-ui" id="newUI"><label style="cursor:pointer; background:#475569; padding:10px; border-radius:5px;" for="newIn">도면 업로드</label></div>
+            <canvas id="newC"></canvas>
+        </div>
+        <input type="file" id="newIn" accept="image/*" style="display:none;">
+    </div>
+</div>
+
+<script>
+    const oldC = document.getElementById('oldC'), newC = document.getElementById('newC');
+    const oldCtx = oldC.getContext('2d', { willReadFrequently: true }), newCtx = newC.getContext('2d');
+    let oldImg = new Image(), newImg = new Image();
+    const CAP_SIZE = 54; // 💡 캡처 영역 소폭 확장
+
+    initPanel('old', oldImg, oldC, oldCtx, 'oldUI', 'oldPanel');
+    initPanel('new', newImg, newC, newCtx, 'newUI', 'newPanel');
+
+    function initPanel(type, img, canvas, ctx, uiId, panelId) {
+        const input = document.getElementById(type + 'In');
+        const panel = document.getElementById(panelId);
+        input.onchange = (e) => { if (e.target.files.length) handleFile(e.target.files[0], img, canvas, ctx, uiId); };
+        panel.addEventListener('dragover', (e) => { e.preventDefault(); panel.classList.add('drag-over'); });
+        panel.addEventListener('dragleave', () => panel.classList.remove('drag-over'));
+        panel.addEventListener('drop', (e) => { e.preventDefault(); panel.classList.remove('drag-over'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0], img, canvas, ctx, uiId); });
+    }
+
+    function handleFile(file, img, canvas, ctx, uiId) {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+            img.onload = () => {
+                canvas.width = img.width; canvas.height = img.height;
+                canvas.style.display = "block";
+                document.getElementById(uiId).style.display = "none";
+                ctx.drawImage(img, 0, 0);
+                if(oldImg.src && newImg.src) document.getElementById('autoBtn').style.display = "block";
+            };
+            img.src = re.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function runAutoPasting() {
+        document.getElementById('loading').style.display = 'flex';
+        setTimeout(processPasting, 100);
+    }
+
+    function processPasting() {
+        newCtx.drawImage(newImg, 0, 0);
+        // 💡 캔버스 해상도 보정 설정
+        newCtx.imageSmoothingEnabled = true;
+        newCtx.imageSmoothingQuality = 'high';
+
+        const imageData = oldCtx.getImageData(0, 0, oldC.width, oldC.height);
+        const pixels = imageData.data;
+        const points = [];
+
+        for (let i = 0; i < pixels.length; i += 4) {
+            const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+            // 💡 빨간색 감도 범위를 넓혀 숫자의 흐릿한 부분까지 포함
+            if (r > 140 && r > g * 1.1 && r > b * 1.1) {
+                const x = (i / 4) % oldC.width;
+                const y = Math.floor((i / 4) / oldC.width);
+                points.push({x, y});
+            }
+        }
+
+        const clusters = [];
+        const clusterDist = 48; 
+        points.forEach(p => {
+            let found = false;
+            for (let c of clusters) {
+                if (Math.abs(c.x - p.x) < clusterDist && Math.abs(c.y - p.y) < clusterDist) {
+                    found = true; break;
+                }
+            }
+            if (!found) clusters.push(p);
+        });
+
+        const rx = newC.width / oldC.width;
+        const ry = newC.height / oldC.height;
+
+        clusters.forEach((pt) => {
+            const tempC = document.createElement('canvas');
+            tempC.width = CAP_SIZE; tempC.height = CAP_SIZE;
+            const tempCtx = tempC.getContext('2d');
+            
+            const sx = Math.max(0, pt.x - CAP_SIZE/2);
+            const sy = Math.max(0, pt.y - CAP_SIZE/2);
+            
+            tempCtx.drawImage(oldC, sx, sy, CAP_SIZE, CAP_SIZE, 0, 0, CAP_SIZE, CAP_SIZE);
+            
+            const capData = tempCtx.getImageData(0, 0, CAP_SIZE, CAP_SIZE);
+            const capPixels = capData.data;
+
+            for (let i = 0; i < capPixels.length; i += 4) {
+                const r = capPixels[i], g = capPixels[i+1], b = capPixels[i+2];
+                // 💡 배경 제거 시 '부드러운 테두리' 유지 로직
+                const brightness = (r + g + b) / 3;
+                const isRed = (r > 120 && r > g * 1.2 && r > b * 1.2);
+                
+                if (!isRed) {
+                    // 흰색 배경에 가까울수록 더 투명하게 (가장자리 부드럽게 처리)
+                    capPixels[i+3] = brightness > 200 ? 0 : (255 - brightness) * 0.3;
+                } else {
+                    // 빨간색은 더 진하게 보정하여 숫자 가독성 향상
+                    capPixels[i] = Math.min(255, r * 1.2);
+                    capPixels[i+1] = g * 0.8;
+                    capPixels[i+2] = b * 0.8;
+                }
+            }
+            tempCtx.putImageData(capData, 0, 0);
+
+            // 💡 붙여넣을 때 좌표 미세 보정으로 깨짐 방지
+            newCtx.drawImage(tempC, (pt.x * rx) - (CAP_SIZE * rx)/2, (pt.y * ry) - (CAP_SIZE * ry)/2, CAP_SIZE * rx, CAP_SIZE * ry);
+        });
+
+        document.getElementById('loading').style.display = 'none';
+        alert(`${clusters.length}개의 마크를 형상 복원하여 복제했습니다!`);
+    }
+
+    function downloadResult() {
+        const link = document.createElement('a');
+        link.download = 'V18_Shape_Recovery.png';
+        link.href = newC.toDataURL('image/png');
+        link.click();
+    }
+</script>
 </body>
 </html>
